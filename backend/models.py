@@ -32,9 +32,6 @@ class Question(db.Model):
   category = Column(String)
   difficulty = Column(Integer)
 
-  def __repr__(self):
-    return f'id: {self.id}, question: {self.question}, category{self.category}'
-
   def __init__(self, question, answer, category, difficulty):
     self.question = question
     self.answer = answer

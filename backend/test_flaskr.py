@@ -1,7 +1,7 @@
 import os
 import unittest
 import json
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
 from flaskr import create_app
@@ -32,6 +32,7 @@ class TriviaTestCase(unittest.TestCase):
             self.db.init_app(self.app)
             self.db.create_all()
 
+
    #=======================#
    #     GET QUESTIONS     #
    #=======================#
@@ -60,6 +61,23 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['error'], 404)
         self.assertEqual(data['message'], 'Resource not found')
 
+
+    #=======================#
+    #    GET CATEGORIES     #
+    #=======================#
+
+    # test get_category
+
+    def test_get_categories(self):
+        res = self.client().get('/categories')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertNotEqual(data['categories'],[])
+        self.assertIsInstance(data['total_categories'], int)
+
+
     #=======================#
     #    DELETE QUESTION    #
     #=======================#
@@ -68,7 +86,7 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_delete_question(self):
         
-        # adding a new trivia
+        # adding a new trivia to test delete request
         
         with self.app.app_context():
             trivia = Question(
@@ -108,29 +126,164 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['error'], 404)
         self.assertEqual(data['message'], 'Resource not found')
 
+
     #=======================#
     #    POST QUESTION      #
     #=======================#
 
-
     # Test post_question
 
     def test_post_question(self):
-        res = self.client().post('/questions')
-        data = json.load(res.data)
+        res = self.client().post('/questions', json= (self.new_trivia))
+        data = json.loads(res.data)
+
         
-        is_id_present = Question.query.get(data['posted_id'])
+        #looking if the new entry has been created
+        new_trivia = Question.query.filter_by(question='QUESTION').one_or_none()
 
         self.assertEqual(res.status_code, 200)
-        self.assertIsInstance(data['posted_id'], int)
-        self.assertTrue(is_id_present, 'checking if new id is present')
+        self.assertTrue(data['success'])
+        self.assertTrue(new_trivia)
+
+
+    #=======================#
+    #    SEARCH QUESTIONS   #
+    #=======================#
+
+    # Test search_question_found
+
+    def test_search_question_found(self):
+       
+        #Creating a trivia test
+
+        with self.app.app_context():
+            trivia = Question(
+                question = 'QUESTION',
+                answer = 'ANSWER',
+                difficulty = 1,
+                category = 1
+            )
+            self.db.session.add(trivia)
+            self.db.session.commit()
+
+        res = self.client().post('/question', json={"searchTerm": "QUEST"})
+        data = json.loads(res.data)
+
+
+        self.assertEqual(res.status_code,200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['total_questions'], 1)
+        self.assertEqual(data['questions'][0]['answer'], 'ANSWER')
+
+
+    # Test search_question_not_found
+
+    def test_search_question_not_found(self):
+        
+        #Creating a trivia test
+
+        with self.app.app_context():
+            trivia = Question(
+                question = 'QUESTION',
+                answer = 'ANSWER',
+                difficulty = 1,
+                category = 1
+            )
+            self.db.session.add(trivia)
+            self.db.session.commit()
+
+        res = self.client().post('/question', json={"searchTerm": "XXXXXXXXXXX"})
+        data = json.loads(res.data)
+
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['error'], 404)
+        
+    #=======================#
+    # GET QUESTIONS BY CAT. #
+    #=======================#
+
+    # Test get_questions_by_category
+
+    def test_get_questions_by_category(self):
+        res = self.client().get('/categories/1/questions')
+        data = json.loads(res.data)
+
+
+        self.assertEqual(data['success'], True)
+        self.assertNotEqual(data['questions'], [])
+        self.assertEqual(data['current_category'], 'Science')
+        self.assertNotEqual(data['categories'], {})
+
+
+    #Test get_questions_by_category_404
+
+    def test_get_questions_by_category(self):
+        res = self.client().get('/categories/1/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(data['success'], True)
+        self.assertNotEqual(data['questions'], [])
+        self.assertEqual(data['current_category'], 'Science')
+        self.assertNotEqual(data['categories'], {})
+
+
+    # Test get_random_quesiton
+
+    # Case with no previous question
+    def test_get_random_question(self):
+        res = self.client().post('/quizzes', json = { 
+                                                'quiz_category': { 
+                                                        'id': 1, 
+                                                        'type': 'Science' 
+                                                        },
+                                                'previous_questions': []                                                      
+                                                            })
+        data = json.loads(res.data)
+
+        print('Data' ,data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['current_category'], 1)
+        self.assertEqual(data['question']['category'], 1)
+
+    # Case with depleted avaiable questions        
+
+        res = self.client().post('/quizzes', json = {
+                                                'quiz_category': { 
+                                                        'id': 1, 
+                                                        'type': 'Science' 
+                                                        },
+                                                'previous_questions': ['q1','q2','q3'] 
+        })
+
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+
+        # question should be false to trgger forceEnd
+        self.assertEqual(data['question'], False)
+        self.assertEqual(data['current_category'], 1)
 
 
     def tearDown(self):
         with self.app.app_context():
-            self.db.session.remove()
-            self.db.drop_all()
 
+            # Clearing test questions if they are present
+
+            print('Executing TearDown: ')
+            test_questions = Question.query.filter_by(question='QUESTION').one_or_none()
+            print('Test question found')
+            if (test_questions):
+                try:
+                    test_questions.delete()
+                    self.db.session.commit()
+                    print('test questions cleared')
+                except:
+                    self.db.session.rollback()
+                    print('An error occurred. probably you have some test question to clear manually from testdb')
+            else: 
+                print('No test question for this test')
 
 
 

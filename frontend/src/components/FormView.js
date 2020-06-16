@@ -50,6 +50,8 @@ class FormView extends Component {
       crossDomain: true,
       success: (result) => {
         document.getElementById("add-question-form").reset();
+        console.log('Question added ', result)
+        window.location.href = ('/questions')
         return;
       },
       error: (error) => {
@@ -57,6 +59,7 @@ class FormView extends Component {
         return;
       }
     })
+    console.log("DATA: ", $.ajax.data)
   }
 
   handleChange = (event) => {
