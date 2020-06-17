@@ -83,7 +83,8 @@ While 'question', 'answer' and 'difficulty' are pretty self explanatory, **categ
 You can also specify how many pages would you like to see adding the parameter **page** to the query
 
 ```bash
-/questions?page=1```
+/questions?page=1
+```
 
 every page shows 10 questions
 
