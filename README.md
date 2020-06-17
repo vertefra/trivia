@@ -8,9 +8,9 @@ Are included methods to add new trivias, retrieve categories or retrieve quensti
 
 - In order to install all the dependecies required from nodejs run
 
-'''bash
+```bash
 npm install
-'''
+```
 
 - Make sure to install also all the requirements for python
 
