@@ -14,19 +14,19 @@ npm install
 
 - Make sure to install also all the requirements for python
 
-'''bash
+```bash
 pip install requirements.txt
-'''
+```
 
 All the backend code follows [PEP8 style guidelines](https://www.python.org/dev/peps/pep-0008/)
 
 - To run the backend development server, run in the backend folder
 
-'''bash
+```bash
 export FLASK_APP=flaskr
 export FLASK_ENV=development
 flask run
-...
+```
 
 
 ### Key dependecies
@@ -67,7 +67,7 @@ returns a dictionary where the key **questions** contains a list of all the ques
 
 A **Question** object is dictionary with the following key, values:
 
-'''bash
+```bash
 {
     'id': int,
     'question': str,
@@ -76,14 +76,14 @@ A **Question** object is dictionary with the following key, values:
     'difficulty': int
 
 }
-'''
+```
 
 While 'question', 'answer' and 'difficulty' are pretty self explanatory, **category** is an integer related to a Model class in the models.py file, the subclass Category, representation of a table where the **id** number is associated to a string value **type**, the name of the category. 
 
 You can also specify how many pages would you like to see adding the parameter **page** to the query
 
-'''bash
-/questions?page=1'''
+```bash
+/questions?page=1```
 
 every page shows 10 questions
 
@@ -104,14 +104,12 @@ if succesful returns a dictionary object with keys
 
 This endpoint takes as argument a **Question** object with the following paramenters
 
-'''bash
 question = String,
 answer = String
 difficulty = Integer,
 category = Integer
-'''
 
-if succesfull returns the total number of questions in the database
+if succesfull, returns the total number of questions in the database
 
 #### GET /categories
 
